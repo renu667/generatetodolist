@@ -1,0 +1,180 @@
+{
+  "name": "problem 3",
+  "nodes": [
+    {
+      "parameters": {
+        "formTitle": "Report",
+        "formDescription": "Kindly Fill Your Detail in the Form",
+        "formFields": {
+          "values": [
+            {
+              "fieldLabel": "Name",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Email id",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Status",
+              "fieldType": "dropdown",
+              "fieldOptions": {
+                "values": [
+                  {
+                    "option": "Completed"
+                  },
+                  {
+                    "option": "Incomplete"
+                  },
+                  {
+                    "option": "Blocked"
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.formTrigger",
+      "typeVersion": 2.2,
+      "position": [
+        -480,
+        40
+      ],
+      "id": "3a6f8165-ab48-49c2-8485-b4186937b504",
+      "name": "On form submission",
+      "webhookId": "bb8e01ce-4a7d-4a54-b8ff-5687fbc85b10"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=You are an assistant responsible for generating professional email responses.\n\nAnalyze the following task submission data and generate a formal reply email:\n- Name: {{$json[\"Name\"]}}\n- Email ID: {{$json[\"Email id\"]}}\n- Task Status: {{$json[\"Status\"]}}\n- Submission Time: {{$json[\"submittedAt\"]}}\n\nCompose a professional and appreciative email confirming receipt of the update and acknowledging the task status. Keep it polite, concise, and workplace-appropriate. \n\nOutput Format:\nSubject: [Subject line]\nBody: [Formatted email body]\n",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2,
+      "position": [
+        160,
+        -40
+      ],
+      "id": "5bf8cd07-435c-4481-a3a6-0f117a9e669b",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "modelName": "models/gemini-2.0-flash",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        -40,
+        240
+      ],
+      "id": "4957d3e5-7f67-46d7-9b52-d4f3f51b4fb1",
+      "name": "Google Gemini Chat Model",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "CKdHuDG7eDvvmpBg",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Loop over input items and add a new field called 'myNewField' to the JSON of each one\nfor (const item of $input.all()) {\n  item.json.myNewField = 1;\n}\n\nreturn $input.all();"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -260,
+        40
+      ],
+      "id": "9e0d4af8-1ce2-4b81-88a1-e141bbf5db46",
+      "name": "Code"
+    },
+    {
+      "parameters": {
+        "sendTo": "akaakashsvg63@gmail.com",
+        "subject": "Report datas",
+        "emailType": "text",
+        "message": "={{ $json.output }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        520,
+        -40
+      ],
+      "id": "1fd44c8e-158d-413b-a762-dc4dbe039ed6",
+      "name": "Gmail",
+      "webhookId": "73c040c2-4d97-454d-be30-ddb3dca954b1",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "TsCqahpFCwzf2dNn",
+          "name": "Gmail account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "On form submission": {
+      "main": [
+        [
+          {
+            "node": "Code",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Gmail",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "6bafb7fd-8016-4339-b4f2-3772c96063f0",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "488c7a18e7a5f9488e47449326f9cfc78b89891606c3e58945f0f66c04caa7e9"
+  },
+  "id": "9ZuQyGciOgOBbp6E",
+  "tags": []
+}
