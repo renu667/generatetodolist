@@ -1,0 +1,330 @@
+{
+  "name": "My workflow",
+  "nodes": [
+    {
+      "parameters": {
+        "formTitle": "job application",
+        "formDescription": "please fill the form for job application",
+        "formFields": {
+          "values": [
+            {
+              "fieldLabel": "enter your name",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "enter your phone number",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "enter your email id",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "position to apply",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "upload resume",
+              "fieldType": "file",
+              "requiredField": true
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.formTrigger",
+      "typeVersion": 2.2,
+      "position": [
+        180,
+        140
+      ],
+      "id": "39ce2320-ab58-484e-b0a8-643cce4cc1c1",
+      "name": "On form submission",
+      "webhookId": "4f71b19a-2fe7-4ee5-9e0e-c473e693d468"
+    },
+    {
+      "parameters": {
+        "operation": "pdf",
+        "binaryPropertyName": "upload_resume",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.extractFromFile",
+      "typeVersion": 1,
+      "position": [
+        460,
+        180
+      ],
+      "id": "a0e0a0ef-d84a-4331-8724-31ba58d3e641",
+      "name": "Extract from File"
+    },
+    {
+      "parameters": {
+        "text": "={{ $json.text }}",
+        "schemaType": "manual",
+        "inputSchema": "{\n\"type\": \"object\",\n\"properties\": {\n\"phone\": {\n\"type\": \"string\"\n},\n\"city\": {\n\"type\": \"string\"\n},\n\"birthdate\": {\n\"type\": \"string\"\n},\n\"name\": {\n\"type\": \"string\"\n},\n\"email\": {\n\"type\": \"string\"\n},\n\"educational qualification\": {\n  \"type\": \"string\"\n},\n\"job history\": {\n\"type\": \"string\"\n},\n\"skills\": {\n\"type\": \"string\"\n}\n}\n}",
+        "options": {
+          "systemPromptTemplate": "You are an expert extraction algorithm.\nOnly extract relevant information from the text.\nIf you do not know the value of an attribute asked to extract, you may omit the attribute's value."
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.informationExtractor",
+      "typeVersion": 1.1,
+      "position": [
+        680,
+        180
+      ],
+      "id": "b5628b8b-8029-4320-9924-753e88aa9057",
+      "name": "Information Extractor"
+    },
+    {
+      "parameters": {
+        "modelName": "models/gemini-2.0-flash",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        860,
+        460
+      ],
+      "id": "d656b0bb-3e4e-443c-a247-b4f3dd39733b",
+      "name": "Google Gemini Chat Model",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "CKdHuDG7eDvvmpBg",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Individual Summary Prompt:\nWrite a concise summary of the following:\nEducational qualification: {{ $json.output['educational qualification'] }}\nJob History: {{ $json.output['job history'] }}\nSkills: {{ $json.output.skills }}\nUse 100 words or less. Be concise and conversational.\nFinal Prompt to Combine:\nWrite a concise summary of the following:\nCity: [No input connected]\nBirthdate: [No input connected]\nEducational qualification: [No input connected]\nJob History: [No input connected]\nSkills: [No input connected]",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2,
+      "position": [
+        1040,
+        180
+      ],
+      "id": "efe197e3-0d8a-4b16-9d27-9c734c265f5f",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "406cb2c7-e602-486b-ad75-b7a0e9cdf468",
+              "name": "job description ",
+              "value": "i want a digital marketing executive",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1400,
+        180
+      ],
+      "id": "32e5b899-2da3-4515-8140-16c52210cfd4",
+      "name": "Edit Fields"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json['job description '] }}",
+        "hasOutputParser": true,
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2,
+      "position": [
+        1620,
+        180
+      ],
+      "id": "cda49bf0-cf10-4cfa-834f-b79c475d6c82",
+      "name": "AI Agent1"
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $('On form submission').item.json['enter your email id'] }}",
+        "subject": "job update",
+        "emailType": "text",
+        "message": "={{ $json.output }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        1980,
+        180
+      ],
+      "id": "3d331ab9-a48a-4e53-80be-4dcf3cd42b3a",
+      "name": "Gmail",
+      "webhookId": "4e4aea62-4198-45ba-a28b-48f28af21325",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "TsCqahpFCwzf2dNn",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "modelName": "models/gemini-2.0-flash",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        1080,
+        400
+      ],
+      "id": "17f41b26-1d76-4bd9-aff9-a7b405ce2b3c",
+      "name": "Google Gemini Chat Model1",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "CKdHuDG7eDvvmpBg",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "modelName": "models/gemini-2.0-flash",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        1640,
+        400
+      ],
+      "id": "ab7b6ffc-b7dc-4228-940e-fed50c285275",
+      "name": "Google Gemini Chat Model2",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "CKdHuDG7eDvvmpBg",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "On form submission": {
+      "main": [
+        [
+          {
+            "node": "Extract from File",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract from File": {
+      "main": [
+        [
+          {
+            "node": "Information Extractor",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Information Extractor",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Information Extractor": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "AI Agent1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent1": {
+      "main": [
+        [
+          {
+            "node": "Gmail",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model1": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model2": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent1",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "b6670808-2867-4985-b69d-9c1c2b5141b7",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "488c7a18e7a5f9488e47449326f9cfc78b89891606c3e58945f0f66c04caa7e9"
+  },
+  "id": "Aqpt8RKPhL4RXDac",
+  "tags": []
+}
